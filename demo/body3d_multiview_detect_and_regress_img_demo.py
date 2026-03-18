@@ -179,7 +179,11 @@ def inference(args):
         multiview_data = pipeline(multiview_data)
         # TODO: inference with input_heatmaps/kpts_2d
         multiview_data = collate([multiview_data], samples_per_gpu=1)
-        multiview_data = scatter(multiview_data, [args.device])[0]
+        model_device = next(model.parameters()).device
+        if model_device.type != 'cpu':
+            multiview_data = scatter(multiview_data, [args.device])[0]
+        else:
+            multiview_data['img_metas'] = multiview_data['img_metas'].data[0]
         with torch.no_grad():
             model.show_result(
                 **multiview_data,
